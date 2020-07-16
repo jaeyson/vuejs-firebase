@@ -113,13 +113,13 @@
               -->
             </li>
             <li>
-              <router-link to="/login">
-                <i class="fas fa-sign-out-alt"> </i>
-              </router-link>
               <!--
-              <a href="/login" title="Logout">
-              </a>
+              <router-link to="/login">
+              </router-link>
               -->
+              <a href="" @click="signOut" title="Logout">
+                <i class="fas fa-sign-out-alt"> </i>
+              </a>
             </li>
           </ul>
         </div>
@@ -135,10 +135,11 @@
 
 <script>
 export default {
-  components: {},
-  methods: {},
-  data: function() {
-    return {};
+  methods: {
+    signOut() {
+      this.$store.dispatch("userLogout");
+      // this.$refs.form.reset();
+    }
   }
 };
 </script>

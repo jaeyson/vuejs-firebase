@@ -1,64 +1,108 @@
-// var createError = require('http-errors');
 const express = require('express');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+// const bodyParser = require('body-parser');
 const logger = require('morgan');
 const cors = require('cors');
+const admin = require('firebase-admin');
 
-// var indexRouter = require('./routes/index');
-// var usersRouter = require('./routes/users');
+const serviceAccount = require('./vuejs-firestoredb-firebase_credentials.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://vuejs-firestoredb.firebaseio.com"
+});
 
 const app = express();
-
-// view engine setup
-// app.set('views', path.join(__dirname, 'views'));
-// app.set('view engine', 'jade');
+const db = admin.firestore();
 
 app.use(cors());
 app.use(logger('dev'));
+app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
-
-// app.use('/', indexRouter);
-// app.use('/users', usersRouter);
-
-// catch 404 and forward to error handler
-// app.use(function(req, res, next) {
-//   next(createError(404));
-// });
-
-// error handler
-// app.use(function(err, req, res, next) {
-//   // set locals, only providing error in development
-//   res.locals.message = err.message;
-//   res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-//   // render the error page
-//   res.status(err.status || 500);
-//   res.render('error');
-// });
-
-let authorized = true;
+// app.use(express.static(path.join(__dirname, 'public')));
 
 function checkAuth(req, res, next) {
-  if (authorized) next();
-  else {
+  if (req.headers.authtoken) {
+    admin.auth().verifyIdToken(req.headers.authToken)
+      .then(() => next())
+      .catch(() => res.status(403).send('unauthorized'));
+  } else {
     res.status(code = 403).send({
       code: code,
       message: 'unauthorized',
     });
-    return
+    return;
   }
-}
+};
 
-app.get('/', checkAuth);
+app.post("/names", async (req, res) => {
+  try {
+    const newDoc = await db
+      .collection("names")
+      .add({
+        name: req.body.name
+      });
 
-app.get('/', (req, res) => {
-  res.json({
-    message: 'Hello World!'
-  })
-})
+    res.status(201).send(`created: ${newDoc.id}`);
+  } catch (error) {
+    res.status(400).send(`error: ${error}`);
+  }
+});
+
+app.get("/names", async (req, res) => {
+  try {
+
+    const docRef = db.collection("names");
+    const snapshot = await docRef.get();
+
+    const namesArray = [];
+
+    snapshot.docs.map(doc => {
+      let data = doc.data().name
+      namesArray.push(data);
+    });
+
+    res.status(201).send({
+      response: namesArray
+    });
+  } catch (error) {
+    res.status(400).send(`error: ${error}`);
+  }
+});
+
+app.get("/test", async (req, res) => {
+  try {
+    const reqName = req.query.name;
+
+    const docRef = db.collection("names");
+    const snapshot = await docRef.get();
+
+    let output = snapshot.docs.map(doc => {
+      return doc.data().name;
+    }).filter(data => data == reqName);
+
+    if (output == reqName) {
+      console.log(req.body);
+      res.status(200).json({ message: `found ${reqName} in firebasedb` })
+    } else {
+      res.status(404).json({ message: `not found ${reqName} in firebasedb` });
+    }
+
+    // const namesArray = [];
+    // snapshot.docs.map(doc => {
+    //   let data = doc.data().name
+    //   namesArray.push(data);
+    // });
+
+    // res.status(200).send({
+    //   names: namesArray
+    // });
+  } catch (error) {
+    console.log(error);
+    // res.status(400).send(`error: ${error}`);
+  }
+});
 
 module.exports = app;

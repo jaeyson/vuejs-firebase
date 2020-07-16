@@ -1,57 +1,43 @@
 <template>
-  <div class="hello">
-    <h1>{{ msg }}</h1>
-    <button @click="sendRequest" class="btn btn-outline-success my-4">Send Request ></button>
-    <p class="lead">{{ response }}</p>
-  </div>
+  <v-form v-model="valid" ref="form">
+    <v-container>
+      <h3>{{ this.$store.state.result }}</h3>
+      <v-row>
+        <v-text-field
+          v-model="name"
+          label="Name"
+          required
+          placeholder="Bad Luck Brian :("
+        ></v-text-field>
+      </v-row>
+      <v-row>
+        <v-btn :disabled="!valid" @click="checkName" color="primary">
+          check name
+        </v-btn>
+      </v-row>
+    </v-container>
+  </v-form>
 </template>
 
 <script>
-import axios from 'axios';
-
-const client = axios.create({
-  baseURL: 'http://localhost:3000',
-  json: true
-});
-
 export default {
   data: function() {
     return {
-      response: 'No data yet...'
-    }
-  },
-  props: {
-    msg: String
+      response: "No data yet...",
+      authStatus: "no auth status",
+      valid: false,
+      name: ""
+    };
   },
   methods: {
-    sendRequest() {
-      client({
-        method: 'get',
-        url: '/'
-      }).then((res) => {
-        this.response = res.data.message
-      }).catch((error) => {
-        this.response = error
-      })
+    checkName() {
+      if (this.$refs.form.validate()) {
+        this.$store.dispatch("checkName", {
+          name: this.name
+        });
+      }
+      // this.$refs.form.reset();
     }
   }
-}
+};
 </script>
-
-<!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-a {
-  color: #42b983;
-}
-</style>

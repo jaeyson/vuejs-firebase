@@ -5,11 +5,17 @@ const cookieParser = require('cookie-parser');
 const logger = require('morgan');
 const cors = require('cors');
 const admin = require('firebase-admin');
+require("dotenv").config();
 
-const serviceAccount = require('./vuejs-firestoredb-firebase_credentials.json');
+// const serviceAccount = require('./firebase_credentials.json');
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
+  // credential: admin.credential.cert(serviceAccount),
+  credential: admin.credential.cert({
+    project_id: process.env.FIREBASE_PROJECT_ID,
+    client_email: process.env.FIREBASE_CLIENT_EMAIL,
+    private_key: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, "\n"),
+  }),
   databaseURL: "https://vuejs-firestoredb.firebaseio.com"
 });
 
